@@ -1,0 +1,122 @@
+Folder PATH listing for volume OS
+Volume serial number is C6FA-2A3E
+C:\USERS\VIHAR\ONEDRIVE\DOCUMENTS\GITHUB\STOCKPREDICTION
+|   README.md
+|   tree.doc
+|   
+\---virtualstockenv
+    |   manage.py
+    |   
+    +---stockapp
+    |   |   admin.py
+    |   |   apps.py
+    |   |   indicator_models.py
+    |   |   long_term_nn.py
+    |   |   models.py
+    |   |   queries.py
+    |   |   short_term_pcf.py
+    |   |   tests.py
+    |   |   thresholds.py
+    |   |   urls.py
+    |   |   views.py
+    |   |   __init__.py
+    |   |   
+    |   +---static
+    |   |   \---stockapp
+    |   |           api.css
+    |   |           main.css
+    |   |           
+    |   +---templates
+    |   |   \---stockapp
+    |   |           aapl.html
+    |   |           about.html
+    |   |           amzn.html
+    |   |           analysis.html
+    |   |           base.html
+    |   |           compare.html
+    |   |           contact.html
+    |   |           default.html
+    |   |           fb.html
+    |   |           googl.html
+    |   |           historical_data.html
+    |   |           home.html
+    |   |           landing_page.html
+    |   |           learning_page.html
+    |   |           longterm.html
+    |   |           myhome.html
+    |   |           nflx.html
+    |   |           predict.html
+    |   |           predict_form.html
+    |   |           query.html
+    |   |           shortterm.html
+    |   |           threshold.html
+    |   |           trip.html
+    |   |           tsla.html
+    |   |           twtr.html
+    |   |           vac.html
+    |   |           yelp.html
+    |   |           
+    |   \---__pycache__
+    |           admin.cpython-38.pyc
+    |           apps.cpython-38.pyc
+    |           indicator_models.cpython-38.pyc
+    |           long_term_nn.cpython-38.pyc
+    |           long_term_nn_new.cpython-38.pyc
+    |           models.cpython-38.pyc
+    |           queries.cpython-38.pyc
+    |           short_term_pcf.cpython-38.pyc
+    |           short_term_pcf_new.cpython-38.pyc
+    |           thresholds.cpython-38.pyc
+    |           urls.cpython-38.pyc
+    |           views.cpython-38.pyc
+    |           __init__.cpython-38.pyc
+    |           
+    +---stockupdate
+    |   |   data_collection.py
+    |   |   updater.py
+    |   |   
+    |   \---__pycache__
+    |           data_collection.cpython-38.pyc
+    |           updater.cpython-38.pyc
+    |           
+    +---users
+    |   |   admin.py
+    |   |   apps.py
+    |   |   forms.py
+    |   |   models.py
+    |   |   registermail.py
+    |   |   tests.py
+    |   |   views.py
+    |   |   
+    |   +---templates
+    |   |   \---users
+    |   |           changepassword.html
+    |   |           change_password.html
+    |   |           login.html
+    |   |           logout.html
+    |   |           profile.html
+    |   |           register.html
+    |   |           
+    |   \---__pycache__
+    |           admin.cpython-38.pyc
+    |           apps.cpython-38.pyc
+    |           forms.cpython-38.pyc
+    |           models.cpython-38.pyc
+    |           registermail.cpython-38.pyc
+    |           views.cpython-38.pyc
+    |           
+    \---virtualstockenv
+        |   asgi.py
+        |   serializers.py
+        |   settings.py
+        |   urls.py
+        |   wsgi.py
+        |   __init__.py
+        |   
+        \---__pycache__
+                serializers.cpython-38.pyc
+                settings.cpython-38.pyc
+                urls.cpython-38.pyc
+                wsgi.cpython-38.pyc
+                __init__.cpython-38.pyc
+                
