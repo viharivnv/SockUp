@@ -51,31 +51,39 @@ def check_thresholds():
         user = row[0]
         curr_price = price_details[stock]
         prev_price = float(row[2])
-        threshold = float(row[3])
-        percent_price = (threshold / 100.0) * prev_price
-        min_price = prev_price - percent_price
-        max_price = prev_price + percent_price
-        if curr_price >= max_price:
-            msg = "Hello " + user + ",\n\nHope you're having a great day!\n\nThis email is to inform you that the " \
-                    "price for stock " + str(stock) + " has increased by more than " + str(threshold) + " percent. " \
-                    "Please login to the application for more details so that you don't miss out on any trading " \
-                    "opportunity.\n\nThank you,\nStockUp Team"
-            mycursor.execute("update thresholds set satisfied = 1 where username = '" + str(user)
-                             + "' and ticker = '" + str(stock) + "';")
-            mydb.commit()
-            mycursor.execute("SELECT email from auth_user where username='" + str(user) + "';")
-            result = mycursor.fetchall()
-            user_email = result[0][0]
-            notify_user(user_email, msg)
-        if curr_price <= min_price:
-            msg = "Hello " + user + ",\n\nHope you're having a great day!\n\nThis email is to inform you that the " \
-                    "price for stock " + str(stock) + " has decreased by more than " + str(threshold) + " percent. " \
-                    "Please login to the application for more details so that you don't miss out on any trading " \
-                  "opportunity.\n\nThank you,\nStockUp Team"
-            mycursor.execute("update thresholds set satisfied = 1 where username = '" + str(user)
-                             + "' and ticker = '" + str(stock) + "';")
-            mydb.commit()
-            mycursor.execute("SELECT email from auth_user where username='" + str(user) + "';")
-            result = mycursor.fetchall()
-            user_email = result[0][0]
-            notify_user(user_email, msg)
+        percent = float(row[3])
+        percent_change = prev_price*(percent/100.0)
+        calc_price = prev_price + percent_change
+        if percent < 0.0:
+            if curr_price <= calc_price:
+                percent = abs(percent)
+                mycursor.execute("SELECT first_name, last_name, email from auth_user where username='"
+                                 + str(user) + "';")
+                result = mycursor.fetchall()
+                firstname = str(result[0][0])
+                lastname = str(result[0][1])
+                user_email = str(result[0][2])
+                msg = "Hello " + firstname + " " + lastname + ",\n\nHope you're having a great day!\n\nThis email is " \
+                    "to inform you that the price for stock " + str(stock) + " has decreased by " + str(percent) + \
+                      " percent. Please login to the application for more details so that you don't miss out on any " \
+                      "trading opportunity.\n\nThank you,\nStockUp Team"
+                mycursor.execute("update thresholds set satisfied = 1 where username = '" + str(user)
+                                 + "' and ticker = '" + str(stock) + "';")
+                mydb.commit()
+                notify_user(user_email, msg)
+        else:
+            if curr_price >= calc_price:
+                mycursor.execute("SELECT first_name, last_name, email from auth_user where username='"
+                                 + str(user) + "';")
+                result = mycursor.fetchall()
+                firstname = str(result[0][0])
+                lastname = str(result[0][1])
+                user_email = str(result[0][2])
+                msg = "Hello " + firstname + " " + lastname + ",\n\nHope you're having a great day!\n\nThis email is " \
+                    "to inform you that the price for stock " + str(stock) + " has increased by " + str(percent) + \
+                      " percent. Please login to the application for more details so that you don't miss out on any " \
+                      "trading opportunity.\n\nThank you,\nStockUp Team"
+                mycursor.execute("update thresholds set satisfied = 1 where username = '" + str(user)
+                                 + "' and ticker = '" + str(stock) + "';")
+                mydb.commit()
+                notify_user(user_email, msg)
