@@ -44,7 +44,7 @@ def get_hist():
 
 
 def get_real():
-    limit = 200
+    limit = 2500
     now = time.time()
     ts = datetime.datetime.fromtimestamp(now).strftime('%Y-%m-%d %H:%M:%S')
     dt_array = ts.strip().split(" ")

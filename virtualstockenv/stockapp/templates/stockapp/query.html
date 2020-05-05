@@ -81,7 +81,7 @@
      <h4>
             
                 Company Name: <strong>{{ real_time.company_name }} </strong><br>
-                Current Price: <strong>{{ real_time.current_price }}</strong>
+                Current Price: <strong>{{ real_time.current_price }} USD</strong>
             </strong>
         </h4>
         <hr>
@@ -95,8 +95,8 @@
                         <td>{{ real_time.prev_close }}</td>
                     </tr>
                      <tr>
-                        <td>Percentage Change in Price</td>
-                        <td>{{ real_time.change }}</td>
+                        <td>Percentage Change in Price from Prev Close</td>
+                        <td>{{ real_time.change }}%</td>
                     </tr>
                     <tr>
                         <td>Average Price in 1 year</td>

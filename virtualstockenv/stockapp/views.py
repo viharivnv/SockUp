@@ -11,6 +11,7 @@ from stockapp.long_term_nn import get_long_term
 from stockapp.queries import run_queries
 import json
 import time
+from django.db.models import Avg
 # Create your views here.
 
 
@@ -91,6 +92,81 @@ def long_analysis(request):
     if not request.user.is_authenticated:
         return render(request, 'stockapp/landing_page.html')
     if request.method == 'POST':
+        if request.POST.get('date-start') and request.POST.get('date-end') and request.POST.get('stock') and request.POST.get('metric') and request.POST.get('frequency'):
+            start_date = request.POST.get('date-start')
+            end_date = request.POST.get('date-end')
+            stock = request.POST.get('stock')
+            value = request.POST.get('metric')
+            frequency = request.POST.get('frequency')
+    else:
+        start_date = '2020-01-01'
+        end_date = datetime.today().strftime('%Y-%m-%d')
+        stock = 'AAPL'
+        value = 'close_value'
+        frequency = 'daily'
+
+    sid = Stocks.objects.filter(ticker=stock).values('sid')
+    stock_id = sid[0]['sid']
+    if frequency == 'daily':
+        dataset = Historical.objects.values('dat', value).filter(sid=stock_id).filter(dat__range=(start_date, end_date))
+    elif frequency == 'monthly':
+        dataset = Historical.objects.filter(dat__range=(start_date, end_date)).values('dat__year','dat__month').annotate(avg=Avg('close_value'))
+    else:
+        dataset = Historical.objects.filter(dat__range=(start_date, end_date)).values('dat__year','dat__week').annotate(avg=Avg('close_value'))
+    dates = list()
+    price = list()
+
+    if frequency == 'daily':
+        for entry in dataset:
+            dates.append(str(entry['dat']))
+            price.append(entry[value])
+    else:
+        for entry in dataset:
+            year = str(entry['dat__year'])
+            if frequency == 'monthly':
+                freq = str(entry['dat__month'])
+            else:
+                freq = str(entry['dat__week'])
+            dates.append(year+"-"+freq)
+            price.append(entry['avg'])
+
+
+    price_series = {
+        'name': value,
+        'data': price,
+    }
+
+    x_title = 'Dates (YY-MM-DD)'
+    if frequency == 'monthly':
+        x_title = 'Months (YY-MM)'
+    elif frequency == 'weekly':
+        x_title = 'Weeks (YY-Week)'
+
+
+    if value == "volume":
+        y_units = " (shares)"
+    else:
+        y_units = " (USD)"
+
+    chart = {
+        'chart': {'type': 'areaspline'},
+        'title': {'text': stock+' Stock Analysis from '+start_date+' to '+end_date},
+        'xAxis': {'title': {'text': x_title}, 'categories' : dates},
+        'yAxis': {'title': {'text': value+y_units}},
+        'series': [price_series]
+    }
+
+    dump = json.dumps(chart)
+    historical = Historical.objects.filter(sid=stock_id).filter(dat__range=(start_date, end_date)).order_by('-dat')
+
+
+    return render(request, 'stockapp/historical_data.html', {'chart': dump, 'historical': historical})
+
+
+def long_analysis_new(request):
+    if not request.user.is_authenticated:
+        return render(request, 'stockapp/landing_page.html')
+    if request.method == 'POST':
         if request.POST.get('date-start') and request.POST.get('date-end') and request.POST.get('stock') and request.POST.get('metric'):
             start_date = request.POST.get('date-start')
             end_date = request.POST.get('date-end')
@@ -105,6 +181,8 @@ def long_analysis(request):
     sid = Stocks.objects.filter(ticker=stock).values('sid')
     stock_id = sid[0]['sid']
     dataset = Historical.objects.values('dat', value).filter(sid=stock_id).filter(dat__range=(start_date, end_date))
+    sample = Historical.objects.values('dat__month').annotate(count=Avg('close_value'))
+    print(sample)
     dates = list()
     price = list()
 
@@ -118,16 +196,21 @@ def long_analysis(request):
         'data': price,
     }
 
+    if value == "volume":
+        y_units = " (shares)"
+    else:
+        y_units = " (USD)"
+
     chart = {
         'chart': {'type': 'areaspline'},
         'title': {'text': stock+' Stock Analysis from '+start_date+' to '+end_date},
-        'xAxis': {'title': {'text': 'Dates'}, 'categories' : dates},
-        'yAxis': {'title': {'text': value}},
+        'xAxis': {'title': {'text': 'Dates (YY-MM-DD)'}, 'categories' : dates},
+        'yAxis': {'title': {'text': value+y_units}},
         'series': [price_series]
     }
 
     dump = json.dumps(chart)
-    historical = Historical.objects.filter(sid=stock_id).filter(dat__range=(start_date, end_date))
+    historical = Historical.objects.filter(sid=stock_id).filter(dat__range=(start_date, end_date)).order_by('-dat')
 
 
     return render(request, 'stockapp/historical_data.html', {'chart': dump, 'historical': historical})
@@ -171,8 +254,8 @@ def short_analysis(request):
             chart = {
                 'chart': {'type': 'line'},
                 'title': {'text': 'Stock Price Analysis from '+start_time+' to '+end_time},
-                'xAxis': {'title': {'text': 'Time'}, 'categories' : times},
-                'yAxis': {'title': {'text': 'Price'}},
+                'xAxis': {'title': {'text': 'Time (HH:MM:SS)'}, 'categories' : times},
+                'yAxis': {'title': {'text': 'Price (USD)'}},
                 'series': [price_series]
             }
 
@@ -204,8 +287,8 @@ def short_analysis(request):
         chart = {
             'chart': {'type': 'line'},
             'title': {'text': stock + ' Stock Price Analysis'},
-            'xAxis': {'title': {'text': 'Time'}, 'categories' : times},
-            'yAxis': {'title': {'text': 'Price'}},
+            'xAxis': {'title': {'text': 'Time (HH:MM:SS)'}, 'categories' : times},
+            'yAxis': {'title': {'text': 'Price (USD)'}},
             'series': [price_series]
         }
 
@@ -216,6 +299,14 @@ def short_analysis(request):
 def threshold(request):
     if not request.user.is_authenticated:
         return render(request, 'stockapp/landing_page.html')
+    stocks = Stocks.objects.values('sid', 'ticker')
+    stock_data = dict()
+    for stock in stocks:
+        sid = str(stock['sid'])
+        ticker = str(stock['ticker'])
+        record = RealTime.objects.values('close_value').filter(sid=sid).order_by('-dat', '-tim')[:1]
+        price = str(record[0]['close_value'])
+        stock_data[ticker] = price
     if request.method == 'POST':
         if request.POST.get('stock') and request.POST.get('threshold'):
             name=request.POST.get('stock')
@@ -233,7 +324,8 @@ def threshold(request):
 
     context = {
 
-        'threshold': Thresholds.objects.filter(username=request.user.username).filter(satisfied=0).values('ticker', 'threshold'),
+        'threshold': Thresholds.objects.filter(username=request.user.username).filter(satisfied=0).values('ticker', 'threshold', 'price'),
+        'stock_data': stock_data,
         'threshold_page': 'active'
 
     }
@@ -243,6 +335,7 @@ def threshold(request):
 def longpredict(request):
     if not request.user.is_authenticated:
         return render(request, 'stockapp/landing_page.html')
+    preds_input = "Please enter the number of days you would like the predictions for:"
     if request.method == 'POST':
         name = request.POST.get('stock')
         no_of_days = request.POST.get('quantity')
@@ -254,11 +347,14 @@ def longpredict(request):
             prediction_results["Day " + str(i+1)] = str(predicted[i])
 
         prediction_msg = "Predictions for stock " + str(name) + " for the next " + str(no_of_days) + " day(s) are:"
-        suggestion_msg = "At this point of time, it is profitable to " + str(suggestion) + " " + str(name) + " stocks."
+        if suggestion == "BUY":
+            suggestion_msg = "As we observe an upcoming uptrend based on the predictions, we suggest you to " + str(suggestion) + " " + str(name) + " stocks."
+        else:
+            suggestion_msg = "As we observe an upcoming downtrend based on the predictions, we suggest you to " + str(suggestion) + " " + str(name) + " stocks."
 
         chart = {
             'chart': {'type': 'line'},
-            'title': {'text': 'Price, EMA and RSI Analysis for '+str(name)},
+            'title': {'text': 'Price, EMA and RSI Plot for '+str(name)+' since past 1 year including the above predictions'},
             'xAxis': {'title': {'text': 'Points of Time'}},
             'yAxis': {'title': {'text': 'Values'}},
             'series': [{
@@ -283,14 +379,15 @@ def longpredict(request):
         dump = json.dumps(chart)
         
 
-        return render(request, 'stockapp/predict_form.html', {'predictions': prediction_results, 'suggestion': suggestion_msg, 'prediction_msg': prediction_msg, 'chart': dump})
+        return render(request, 'stockapp/predict_form.html', {'preds_input': preds_input, 'predictions': prediction_results, 'suggestion': suggestion_msg, 'prediction_msg': prediction_msg, 'chart': dump})
     else:
-        return render(request, 'stockapp/predict_form.html', {'title': 'Long Term Predicion'})
+        return render(request, 'stockapp/predict_form.html', {'preds_input': preds_input, 'title': 'Long Term Predicion'})
 
 
 def shortpredict(request):
     if not request.user.is_authenticated:
         return render(request, 'stockapp/landing_page.html')
+    preds_input = "Please enter the number of minutes you would like the predictions for:"
     if request.method == 'POST':
         name = request.POST.get('stock')
         no_of_mins = request.POST.get('quantity')
@@ -302,11 +399,14 @@ def shortpredict(request):
             prediction_results["Minute " + str(i+1)] = str(predicted[i])
 
         prediction_msg = "Predictions for stock " + str(name) + " for the next " + str(no_of_mins) + " minute(s) are:"
-        suggestion_msg = "At this point of time, it is profitable to " + str(suggestion) + " " + str(name) + " stocks."
+        if suggestion == "BUY":
+            suggestion_msg = "As we observe an upcoming uptrend based on the predictions, we suggest you to " + str(suggestion) + " " + str(name) + " stocks."
+        else:
+            suggestion_msg = "As we observe an upcoming downtrend based on the predictions, we suggest you to " + str(suggestion) + " " + str(name) + " stocks."
 
         chart = {
             'chart': {'type': 'line'},
-            'title': {'text': 'Price, EMA and RSI Analysis for '+str(name)},
+            'title': {'text': 'Price, EMA and RSI Plot for '+str(name)+' since past 1 day including the above predictions'},
             'xAxis': {'title': {'text': 'Points of Time'}},
             'yAxis': {'title': {'text': 'Values'}},
             'series': [{
@@ -331,9 +431,9 @@ def shortpredict(request):
         dump = json.dumps(chart)
 
 
-        return render(request, 'stockapp/predict_form.html', {'title': 'Short Term Predicion', 'predictions': prediction_results, 'suggestion': suggestion_msg, 'prediction_msg': prediction_msg, 'chart': dump})
+        return render(request, 'stockapp/predict_form.html', {'preds_input': preds_input, 'title': 'Short Term Predicion', 'predictions': prediction_results, 'suggestion': suggestion_msg, 'prediction_msg': prediction_msg, 'chart': dump})
     else:
-        return render(request, 'stockapp/predict_form.html', {'title': 'Short Term Predicion'})
+        return render(request, 'stockapp/predict_form.html', {'preds_input': preds_input, 'title': 'Short Term Predicion'})
 
 def aapl_profile(request):
     if not request.user.is_authenticated:
@@ -444,7 +544,7 @@ def compare(request):
         'chart': {'type': 'line'},
         'title': {'text': 'Comparison of Stock Performance over the past ' + period},
         'xAxis': {'title': {'text': 'Points of Time'}},
-        'yAxis': {'title': {'text': 'Price'}},
+        'yAxis': {'title': {'text': 'Price (USD)'}},
         'series': series1
         }
 
@@ -454,7 +554,7 @@ def compare(request):
         'chart': {'type': 'line'},
         'title': {'text': 'Comparison of Stock Volumes traded over the past ' + period},
         'xAxis': {'title': {'text': 'Points of Time'}},
-        'yAxis': {'title': {'text': 'Volume'}},
+        'yAxis': {'title': {'text': 'Volume (Shares)'}},
         'series': series2
         }
 

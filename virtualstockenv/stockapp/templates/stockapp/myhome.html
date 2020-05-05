@@ -41,6 +41,10 @@
         color: #99ff99;
       }
 
+      .sample1{
+        color: #ffc266;
+      }
+
       </style>
     </head>
     <body>
@@ -62,7 +66,7 @@
                 <a class="nav-link" href="{% url 'compare' %}">Compare</a>
               </li>
               <li class="nav-item {{ threshold_page }}">
-                <a class="nav-link" href="{% url 'threshold' %}">Threshold</a>
+                <a class="nav-link" href="{% url 'threshold' %}">NotifyMe</a>
               </li>
               <li class="nav-item {{ learning_page }}">
                 <a class="nav-link" href="{% url 'learning_page' %}">Beginner's Guide</a>
@@ -97,6 +101,8 @@
     <hr>
     	<br>
 	<h5 class="text-center">The following are the list of stock tickers with their most recent prices. Please click on the tickers to learn more about the company profiles. Clicking on the prices takes you to another page where you can analyze the stocks in more detail.<br></h5>
+  <h6 class="text-center sample1">We provide you with the most up to date real-time data by updating the data every minute <a href="https://finance.yahoo.com/" target="_blank">(Data Source)</a></h6>
+
 	<br>
             <ul>
             <div class="row">
